@@ -28,4 +28,5 @@ return array(
     'create_fieldset'         => 'Uusi Fieldset',
     'create_field'            => 'Uusi mukautettu kenttä',
     'value_encrypted'      	        => 'Kentän arvo salataan tietokannassa. Vain järjestelmänvalvojat voivat tarkastella purettua arvoa',
+    'show_in_email'     => 'Käytetäänkö kentän arvoa käyttäjälle lähetettävissä luovutus-sähköposteissa? Salattuja kenttiä ei voi lisätä sähköposteihin.',
 );

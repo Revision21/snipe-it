@@ -15,6 +15,11 @@ return array(
         'success' => 'Valmistaja päivitettiin onnistuneesti.'
     ),
 
+    'restore' => array(
+        'error'   => 'Valmistajaa ei palautettu, ole hyvä ja yritä uudelleen',
+        'success' => 'Valmistaja palautettu onnistuneesti.'
+    ),
+
     'delete' => array(
         'confirm'   => 'Oletko varma että haluat poistaa tämän valmistajan?',
         'error'   => 'Valmistajan poistamisessa tapahtui virhe. Ole hyvä ja yritä uudelleen.',

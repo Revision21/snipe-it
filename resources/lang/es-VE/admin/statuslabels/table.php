@@ -1,17 +1,19 @@
 <?php
 
 return array(
-    'about'      	=> 'Info Etiquetas Estado',
+    'about'      	=> 'Acerca de los estados de etiqueta',
     'archived'      	=> 'Archivado',
-    'create'      	=> 'Crear Etiqueta Estado',
-    'color'      	=> 'Color de la Gráfica',
-    'deployable'      	=> 'Desplegable',
-    'info'      	=> 'Las etiquetas de estado se utilizan para describir los diferentes estados en que pueden estar tus equipos. Pueden estar fuera en reparación, perdidos/robados, etc. Puedes crear nuevas etiquetas de estado para equipos desplegables, pendientes o archivados.',
-    'name'      	=> 'Estado',
+    'create'      	=> 'Crear estado de etiqueta',
+    'color'      	=> 'Color del Gráfico',
+    'default_label' => 'Etiqueta Predeterminada',
+    'default_label_help' => 'Esto se usa para garantizar que las etiquetas de estado que utiliza con más frecuencia aparezcan en la parte superior del cuadro de selección al crear / editar activos.',
+    'deployable'      	=> 'Enviable',
+    'info'      	=> 'Las etiquetas de estado se utilizan para describir los diferentes estados en que pueden estar tus activos. Pueden estar fuera en reparación, perdidos/robados, etc. Puedes crear nuevas etiquetas de estado para activos desplegables, pendientes o archivados.',
+    'name'      	=> 'Nombre de estado',
     'pending'      	=> 'Pendiente',
-    'status_type'   => 'Tipo de estado',
+    'status_type'   => 'Tipo de Estado',
     'show_in_nav'   => 'Mostrar en la barra lateral',
-    'title'      	=> 'Etiquetas Estado',
+    'title'      	=> 'Etiquetas de Estado',
     'undeployable'  => 'No desplegable',
-    'update'      	=> 'Actualizar Etiqueta Estado',
+    'update'      	=> 'Actualizar Etiqueta de Estado',
 );

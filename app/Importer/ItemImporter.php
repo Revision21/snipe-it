@@ -10,6 +10,7 @@ use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\Statuslabel;
 use App\Models\Supplier;
+use App\Models\Department;
 use App\Models\User;
 
 class ItemImporter extends Importer
@@ -54,6 +55,18 @@ class ItemImporter extends Importer
         if ($this->shouldUpdateField($item_supplier)) {
             $this->item['supplier_id'] = $this->createOrFetchSupplier($item_supplier);
         }
+
+        $item_department = $this->findCsvMatch($row, "department");
+        if ($this->shouldUpdateField($item_department)) {
+            $this->item['department_id'] = $this->createOrFetchDepartment($item_department);
+        }
+
+        $item_manager_first_name = $this->findCsvMatch($row, "manager_first_name");
+        $item_manager_last_name = $this->findCsvMatch($row, "manager_last_name");
+        if ($this->shouldUpdateField($item_manager_first_name)) {
+            $this->item['manager_id'] = $this->fetchManager($item_manager_first_name, $item_manager_last_name);
+        }
+
         $this->item["name"] = $this->findCsvMatch($row, "item_name");
         $this->item["notes"] = $this->findCsvMatch($row, "notes");
         $this->item["order_number"] = $this->findCsvMatch($row, "order_number");
@@ -69,9 +82,32 @@ class ItemImporter extends Importer
         $this->item['serial'] = $this->findCsvMatch($row, "serial");
         // NO need to call this method if we're running the user import.
         // TODO: Merge these methods.
+        $this->item['checkout_class'] = $this->findCsvMatch($row, "checkout_class");
         if(get_class($this) !== UserImporter::class) {
-            $this->item["user"] = $this->createOrFetchUser($row);
+            // $this->item["user"] = $this->createOrFetchUser($row);
+            $this->item["checkout_target"] = $this->determineCheckout($row);
+
         }
+    }
+
+    /**
+     * Parse row to determine what (if anything) we should checkout to.
+     * @param  array $row CSV Row being parsed
+     * @return SnipeModel      Model to be checked out to
+     */ 
+    protected function determineCheckout($row)
+    {
+        // We only support checkout-to-location for asset, so short circuit otherwise.
+        if(get_class($this) != AssetImporter::class) {
+            return $this->createOrFetchUser($row);
+        }
+
+        if ($this->item['checkout_class'] === 'location') {
+            return Location::findOrFail($this->createOrFetchLocation($this->findCsvMatch($row, 'checkout_location')));
+        }
+
+        return $this->createOrFetchUser($row);
+
     }
 
     /**
@@ -138,7 +174,7 @@ class ItemImporter extends Importer
      * @since 3.0
      * @param array
      * @param $category Category
-     * @param $manufacturer Manufacturer
+     * @param $row Manufacturer
      * @return int Id of asset model created/found
      * @internal param $asset_modelno string
      */
@@ -255,6 +291,8 @@ class ItemImporter extends Importer
         $this->logError($company, 'Company');
         return null;
     }
+
+
 
     /**
      * Fetch the existing status label or create new if it doesn't exist.

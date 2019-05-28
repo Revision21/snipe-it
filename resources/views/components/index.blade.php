@@ -18,15 +18,10 @@
   <div class="col-md-12">
     <div class="box box-default">
       <div class="box-body">
-        {{ Form::open([
-             'method' => 'POST',
-             'route' => ['component/bulk-form'],
-             'class' => 'form-inline' ]) }}
-
-
         <table
                 data-columns="{{ \App\Presenters\ComponentPresenter::dataTableLayout() }}"
                 data-cookie-id-table="componentsTable"
+                data-toolbar="#toolbar"
                 data-pagination="true"
                 data-id-table="componentsTable"
                 data-search="true"
@@ -45,18 +40,6 @@
                 "ignoreColumn": ["actions","image","change","checkbox","checkincheckout","icon"]
                 }'>
         </table>
-
-        <table
-          data-toolbar="#toolbar"
-          name="components"
-          class="table table-striped snipe-table"
-          id="table"
-          data-url="{{route('api.components.index') }}"
-          data-cookie="true"
-          data-click-to-select="true"
-          data-cookie-id-table="componentsTable-{{ config('version.hash_version') }}">
-        </table>
-        {{ Form::close() }}
       </div><!-- /.box-body -->
     </div><!-- /.box -->
   </div>

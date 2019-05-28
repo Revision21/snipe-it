@@ -51,7 +51,7 @@ class LocationsController extends Controller
 
 
 
-        $offset = $request->input('offset', 0);
+        $offset = (($locations) && (request('offset') > $locations->count())) ? 0 : request('offset', 0);
         $limit = $request->input('limit', 50);
         $order = $request->input('order') === 'asc' ? 'asc' : 'desc';
         $sort = in_array($request->input('sort'), $allowed_columns) ? $request->input('sort') : 'created_at';
@@ -106,7 +106,26 @@ class LocationsController extends Controller
     public function show($id)
     {
         $this->authorize('view', Location::class);
-        $location = Location::findOrFail($id);
+        $location = Location::with('parent', 'manager', 'childLocations')
+            ->select([
+                'locations.id',
+                'locations.name',
+                'locations.address',
+                'locations.address2',
+                'locations.city',
+                'locations.state',
+                'locations.zip',
+                'locations.country',
+                'locations.parent_id',
+                'locations.manager_id',
+                'locations.created_at',
+                'locations.updated_at',
+                'locations.image',
+                'locations.currency'
+            ])
+            ->withCount('assignedAssets')
+            ->withCount('assets')
+            ->withCount('users')->findOrFail($id);
         return (new LocationsTransformer)->transformLocation($location);
     }
 
@@ -122,7 +141,7 @@ class LocationsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->authorize('edit', Location::class);
+        $this->authorize('update', Location::class);
         $location = Location::findOrFail($id);
         $location->fill($request->all());
 

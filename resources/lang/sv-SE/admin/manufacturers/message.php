@@ -15,6 +15,11 @@ return array(
         'success' => 'Tillverkaren uppdaterades utan problem.'
     ),
 
+    'restore' => array(
+        'error'   => 'Tillverkaren kunde inte återskapas. Vänligen försök igen',
+        'success' => 'Tillverkaren återskapades utan problem.'
+    ),
+
     'delete' => array(
         'confirm'   => 'Är du säker på att du vill ta bort?',
         'error'   => 'Det gick inte att ta bort tillverkaren. Vänligen försök igen.',

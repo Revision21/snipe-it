@@ -113,7 +113,7 @@ class AssetMaintenancesController extends Controller
         $assetMaintenance->notes = e($request->input('notes'));
         $asset = Asset::find(e($request->input('asset_id')));
 
-        if (!Company::isCurrentUserHasAccess($asset)) {
+        if ((!Company::isCurrentUserHasAccess($asset)) && ($asset!=null)) {
             return static::getInsufficientPermissionsRedirect();
         }
 
@@ -162,6 +162,9 @@ class AssetMaintenancesController extends Controller
             // Redirect to the improvement management page
             return redirect()->route('maintenances.index')
                            ->with('error', trans('admin/asset_maintenances/message.not_found'));
+        } elseif (!$assetMaintenance->asset) {
+            return redirect()->route('maintenances.index')
+                ->with('error', 'The asset associated with this maintenance does not exist.');
         } elseif (!Company::isCurrentUserHasAccess($assetMaintenance->asset)) {
             return static::getInsufficientPermissionsRedirect();
         }

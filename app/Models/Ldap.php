@@ -96,8 +96,11 @@ class Ldap extends Model
 
         $filterQuery = $settings->ldap_auth_filter_query . $username;
 
+
         if (!$ldapbind = @ldap_bind($connection, $userDn, $password)) {
-            return false;
+            if(!$ldapbind = Ldap::bindAdminToLdap($connection)){
+                    return false;
+            }
         }
 
         if (!$results = ldap_search($connection, $baseDn, $filterQuery)) {
@@ -112,7 +115,7 @@ class Ldap extends Model
             return false;
         }
 
-        return $user;
+        return array_change_key_case($user);
 
     }
 
@@ -262,13 +265,13 @@ class Ldap extends Model
             $search_results = ldap_search($ldapconn, $base_dn, '('.$filter.')');
 
             if (!$search_results) {
-                return redirect()->route('users')->with('error', trans('admin/users/message.error.ldap_could_not_search').ldap_error($ldapconn));
+                return redirect()->route('users.index')->with('error', trans('admin/users/message.error.ldap_could_not_search').ldap_error($ldapconn));
             }
 
             // Get results from page
             $results = ldap_get_entries($ldapconn, $search_results);
             if (!$results) {
-                return redirect()->route('users')->with('error', trans('admin/users/message.error.ldap_could_not_get_entries').ldap_error($ldapconn));
+                return redirect()->route('users.index')->with('error', trans('admin/users/message.error.ldap_could_not_get_entries').ldap_error($ldapconn));
             }
 
             // Add results to result set

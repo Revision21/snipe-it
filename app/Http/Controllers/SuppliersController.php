@@ -34,10 +34,9 @@ class SuppliersController extends Controller
     {
         // Grab all the suppliers
         $this->authorize('view', Supplier::class);
-        $suppliers = Supplier::orderBy('created_at', 'DESC')->get();
 
         // Show the page
-        return view('suppliers/index', compact('suppliers'));
+        return view('suppliers/index');
     }
 
 
@@ -95,23 +94,6 @@ class SuppliersController extends Controller
             return redirect()->route('suppliers.index')->with('success', trans('admin/suppliers/message.create.success'));
         }
         return redirect()->back()->withInput()->withErrors($supplier->getErrors());
-    }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function apiStore(Request $request)
-    {
-        $this->authorize('create', Supplier::class);
-        $supplier = new Supplier;
-        $supplier->name =  $request->input('name');
-        $supplier->user_id              = Auth::id();
-
-        if ($supplier->save()) {
-            return JsonResponse::create($supplier);
-        }
-        return JsonResponse::create(["error" => "Failed validation: ".print_r($supplier->getErrors(), true)], 500);
     }
 
     /**
@@ -192,7 +174,7 @@ class SuppliersController extends Controller
             try  {
                 unlink(app('suppliers_upload_path').$old_image);
             } catch (\Exception $e) {
-                \Log::error($e);
+                \Log::info($e);
             }
         }
 

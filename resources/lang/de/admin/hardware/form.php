@@ -29,7 +29,7 @@ return array(
     'months'			=> 'Monate',
     'name'				=> 'Asset Name',
     'notes'				=> 'Notizen',
-    'order'				=> 'Artikelnummer',
+    'order'				=> 'Auftragsnummer',
     'qr'				=> 'QR-Code',
     'requestable'		=> 'Benutzer dürfen dieses Asset anfordern',
     'select_statustype'	=> 'Status Typ auswählen',
@@ -38,6 +38,7 @@ return array(
     'tag'				=> 'Asset ID',
     'update'			=> 'Asset Update',
     'warranty'			=> 'Garantie',
+		'warranty_expires'		=> 'Garantie Ablaufdatum',
     'years'				=> 'Jahre',
 )
 ;

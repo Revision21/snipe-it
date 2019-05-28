@@ -61,16 +61,16 @@ class LdapSync extends Command
                 $json_summary = [ "error" => true, "error_message" => $e->getMessage(), "summary" => [] ];
                 $this->info(json_encode($json_summary));
             }
-            LOG::error($e);
+            LOG::info($e);
             return [];
         }
 
         $summary = array();
 
-        try {    
+        try {
             if ($this->option('base_dn') != '') {
                 $search_base = $this->option('base_dn');
-                LOG::debug('Importing users from specified base DN: \"'.$search_base.'\".');                
+                LOG::debug('Importing users from specified base DN: \"'.$search_base.'\".');
             } else {
                 $search_base = null;
             }
@@ -80,7 +80,7 @@ class LdapSync extends Command
                 $json_summary = [ "error" => true, "error_message" => $e->getMessage(), "summary" => [] ];
                 $this->info(json_encode($json_summary));
             }
-            LOG::error($e);
+            LOG::info($e);
             return [];
         }
 
@@ -106,7 +106,7 @@ class LdapSync extends Command
             // Retrieve locations with a mapped OU, and sort them from the shallowest to deepest OU (see #3993)
             $ldap_ou_locations = Location::where('ldap_ou', '!=', '')->get()->toArray();
             $ldap_ou_lengths = array();
-            
+
             foreach ($ldap_ou_locations as $location) {
                 $ldap_ou_lengths[] = strlen($location["ldap_ou"]);
             }
@@ -128,15 +128,21 @@ class LdapSync extends Command
                 $location_users = Ldap::findLdapUsers($ldap_loc["ldap_ou"]);
                 $usernames = array();
                 for ($i = 0; $i < $location_users["count"]; $i++) {
-                    $location_users[$i]["ldap_location_override"] = true;
-                    $location_users[$i]["location_id"] = $ldap_loc["id"];
-                    $usernames[] = $location_users[$i][$ldap_result_username][0];
+
+                    if (array_key_exists($ldap_result_username, $location_users[$i])) {
+                        $location_users[$i]["ldap_location_override"] = true;
+                        $location_users[$i]["location_id"] = $ldap_loc["id"];
+                        $usernames[] = $location_users[$i][$ldap_result_username][0];
+                    }
+
                 }
 
                 // Delete located users from the general group.
                 foreach ($results as $key => $generic_entry) {
-                    if (in_array($generic_entry[$ldap_result_username][0], $usernames)) {
-                        unset($results[$key]);
+                   if ((is_array($generic_entry)) && (array_key_exists($ldap_result_username, $generic_entry))) {
+                        if (in_array($generic_entry[$ldap_result_username][0], $usernames)) {
+                            unset($results[$key]);
+                        }
                     }
                 }
 
@@ -162,38 +168,49 @@ class LdapSync extends Command
                 $item["ldap_location_override"] = isset($results[$i]["ldap_location_override"]) ? $results[$i]["ldap_location_override"]:"";
                 $item["location_id"] = isset($results[$i]["location_id"]) ? $results[$i]["location_id"]:"";
 
-                if ( array_key_exists('useraccountcontrol', $results[$i]) ) {
-                    $enabled_accounts = [
-                        '512', '544', '66048', '66080', '262656', '262688', '328192', '328224'
-                    ];
-                    $item['activated'] = ( in_array($results[$i]['useraccountcontrol'][0], $enabled_accounts) ) ? 1 : 0;
+                $user = User::where('username', $item["username"])->first();
+                if ($user) {
+                    // Updating an existing user.
+                    $item["createorupdate"] = 'updated';
                 } else {
-                    $item['activated'] = 0;
-                }
-
-                // User exists
-                $item["createorupdate"] = 'updated';
-                if (!$user = User::where('username', $item["username"])->first()) {
+                    // Creating a new user.
                     $user = new User;
                     $user->password = $pass;
+                    $user->activated = 0;
                     $item["createorupdate"] = 'created';
                 }
 
-                // Create the user if they don't exist.
-                $user->first_name = e($item["firstname"]);
-                $user->last_name = e($item["lastname"]);
-                $user->username = e($item["username"]);
-                $user->email = e($item["email"]);
+                $user->first_name = $item["firstname"];
+                $user->last_name = $item["lastname"];
+                $user->username = $item["username"];
+                $user->email = $item["email"];
                 $user->employee_num = e($item["employee_number"]);
-                $user->activated = $item['activated'];
+
+                // Sync activated state for Active Directory.
+                if ( array_key_exists('useraccountcontrol', $results[$i]) ) {
+                  $enabled_accounts = [
+                    '512', '544', '66048', '66080', '262656', '262688', '328192', '328224'
+                  ];
+                  $user->activated = ( in_array($results[$i]['useraccountcontrol'][0], $enabled_accounts) ) ? 1 : 0;
+                }
+
+                // If we're not using AD, and there isn't an activated flag set, activate all users
+                elseif (empty($ldap_result_active_flag)) {
+                  $user->activated = 1;
+                }
 
                 if ($item['ldap_location_override'] == true) {
                     $user->location_id = $item['location_id'];
                 } elseif ((isset($location)) && (!empty($location))) {
-                    $user->location_id = e($location->id);
+
+                    if ((is_array($location)) && (array_key_exists('id', $location))) {
+                        $user->location_id = $location['id'];
+                    } elseif (is_object($location)) {
+                        $user->location_id = $location->id;
+                    }
+
                 }
 
-                $user->notes = 'Imported from LDAP';
                 $user->ldap_import = 1;
 
                 $errors = '';

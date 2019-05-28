@@ -24,7 +24,7 @@ class AccessoriesController extends Controller
         $this->authorize('view', Accessory::class);
         $allowed_columns = ['id','name','model_number','eol','notes','created_at','min_amt','company_id'];
 
-        $accessories = Accessory::whereNull('accessories.deleted_at')->with('category', 'company', 'manufacturer', 'users', 'location');
+        $accessories = Accessory::with('category', 'company', 'manufacturer', 'users', 'location');
 
         if ($request->has('search')) {
             $accessories = $accessories->TextSearch($request->input('search'));
@@ -46,7 +46,7 @@ class AccessoriesController extends Controller
             $accessories->where('supplier_id','=',$request->input('supplier_id'));
         }
 
-        $offset = $request->input('offset', 0);
+        $offset = (($accessories) && (request('offset') > $accessories->count())) ? 0 : request('offset', 0);
         $limit = $request->input('limit', 50);
         $order = $request->input('order') === 'asc' ? 'asc' : 'desc';
         $sort = in_array($request->input('sort'), $allowed_columns) ? $request->input('sort') : 'created_at';

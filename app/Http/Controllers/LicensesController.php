@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AssetFileRequest;
 use Assets;
 use Illuminate\Support\Facades\Session;
 use Input;
@@ -107,6 +108,7 @@ class LicensesController extends Controller
         $license->seats             = $request->input('seats');
         $license->serial            = $request->input('serial');
         $license->supplier_id       = $request->input('supplier_id');
+        $license->category_id       = $request->input('category_id');
         $license->termination_date  = $request->input('termination_date');
         $license->user_id           = Auth::id();
 
@@ -177,11 +179,14 @@ class LicensesController extends Controller
         $license->purchase_date     = $request->input('purchase_date');
         $license->purchase_order    = $request->input('purchase_order');
         $license->reassignable      = $request->input('reassignable', 0);
-        $license->serial            = $request->input('serial');
+        if (Gate::allows('viewKeys', $license)) {
+            $license->serial        = $request->input('serial');
+        }
         $license->termination_date  = $request->input('termination_date');
         $license->seats             = e($request->input('seats'));
         $license->manufacturer_id   =  $request->input('manufacturer_id');
         $license->supplier_id       = $request->input('supplier_id');
+        $license->category_id       = $request->input('category_id');
 
         if ($license->save()) {
             return redirect()->route('licenses.show', ['license' => $licenseId])->with('success', trans('admin/licenses/message.update.success'));
@@ -262,31 +267,40 @@ class LicensesController extends Controller
      * @author [A. Gianotto] [<snipe@snipe.net>]
      * @since [v1.0]
      * @param Request $request
+     * @param int $licenseId
      * @param int $seatId
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function postCheckout(Request $request, $licenseId)
+    public function postCheckout(Request $request, $licenseId, $seatId = null)
     {
 
         // Check that the license is valid
-        if ($license = License::where('id',$licenseId)->first()) {
-
+        if ($license = License::where('id', $licenseId)->first()) {
+            
             // If the license is valid, check that there is an available seat
             if ($license->getAvailSeatsCountAttribute() < 1) {
                 return redirect()->route('licenses.index')->with('error', 'There are no available seats for this license');
             }
-
-            // Get the next available seat for this license
-            $next = $license->freeSeat();
-
-            if (!$next) {
-                return redirect()->route('licenses.index')->with('error', 'There are no available seats for this license');
+            if (!$seatId) {
+                // Get the next available seat for this license
+                $next = $license->freeSeat();
+                if (!$next) {
+                    return redirect()->route('licenses.index')->with('error', 'There are no available seats for this license');
+                }
+                if (!$licenseSeat = LicenseSeat::where('id', '=', $next->id)->first()) {
+                    return redirect()->route('licenses.index')->with('error', 'There are no available seats for this license');
+                }
+            } else {
+                $licenseSeat = LicenseSeat::where('id', '=', $seatId)->first();
+                if (!$licenseSeat) {
+                    return redirect()->route('licenses.index')->with('error', 'License seat is not available for checkout');
+                }
             }
+    
 
-            if (!$licenseSeat = LicenseSeat::where('id', '=', $next->id)->first()) {
-                return redirect()->route('licenses.index')->with('error', 'There are no available seats for this license');
-            }
+            
 
+            
 
             $this->authorize('checkout', $license);
 
@@ -401,31 +415,19 @@ class LicensesController extends Controller
             return redirect()->back()->withInput();
         }
 
-        // Declare the rules for the form validation
-        $rules = array(
-            'note'   => 'string',
-            'notes'   => 'string',
-        );
 
-        // Create a new validator instance from our validation rules
-        $validator = Validator::make(Input::all(), $rules);
-
-        // If validation fails, we'll exit the operation now.
-        if ($validator->fails()) {
-            // Ooops.. something went wrong
-            return redirect()->back()->withInput()->withErrors($validator);
-        }
         $return_to = User::find($licenseSeat->assigned_to);
         if (!$return_to) {
             $return_to = Asset::find($licenseSeat->asset_id);
         }
+
         // Update the asset data
         $licenseSeat->assigned_to                   = null;
         $licenseSeat->asset_id                      = null;
 
         // Was the asset updated?
         if ($licenseSeat->save()) {
-            $licenseSeat->logCheckin($return_to, e(request('note')));
+            $licenseSeat->logCheckin($license, e(request('note')));
             if ($backTo=='user') {
                 return redirect()->route("users.show", $return_to->id)->with('success', trans('admin/licenses/message.checkin.success'));
             }
@@ -492,7 +494,7 @@ class LicensesController extends Controller
     * @param int $licenseId
     * @return \Illuminate\Http\RedirectResponse
      */
-    public function postUpload(Request $request, $licenseId = null)
+    public function postUpload(AssetFileRequest $request, $licenseId = null)
     {
         $license = License::find($licenseId);
         // the license is valid
@@ -501,21 +503,11 @@ class LicensesController extends Controller
         if (isset($license->id)) {
             $this->authorize('update', $license);
 
-            if (Input::hasFile('licensefile')) {
+            if (Input::hasFile('file')) {
 
-                foreach (Input::file('licensefile') as $file) {
-
-                    $rules = array(
-                    'licensefile' => 'required|mimes:png,gif,jpg,jpeg,doc,docx,pdf,txt,zip,rar,rtf,xml,lic|max:2000'
-                    );
-                    $validator = Validator::make(array('licensefile'=> $file), $rules);
-
-                    if ($validator->fails()) {
-                         return redirect()->back()->with('error', trans('admin/licenses/message.upload.invalidfiles'));
-                    }
+                foreach (Input::file('file') as $file) {
                     $extension = $file->getClientOriginalExtension();
-                    $filename = 'license-'.$license->id.'-'.str_random(8);
-                    $filename .= '-'.str_slug($file->getClientOriginalName()).'.'.$extension;
+                    $filename = 'license-'.$license->id.'-'.str_random(8).'-'.str_slug(basename($file->getClientOriginalName(), '.'.$extension)).'.'.$extension;
                     $upload_success = $file->move($destinationPath, $filename);
 
                     //Log the upload to the log
@@ -581,7 +573,7 @@ class LicensesController extends Controller
     * @param int $fileId
     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
-    public function displayFile($licenseId = null, $fileId = null)
+    public function displayFile($licenseId = null, $fileId = null, $download = true)
     {
 
         $license = License::find($licenseId);
@@ -591,8 +583,31 @@ class LicensesController extends Controller
             $this->authorize('view', $license);
             $log = Actionlog::find($fileId);
             $file = $log->get_src('licenses');
+
+
+            if ($file =='') {
+                return response('File not found on server', 404)
+                    ->header('Content-Type', 'text/plain');
+            }
+
+            $mimetype = \File::mimeType($file);
+
+
+            if (!file_exists($file)) {
+                return response('File '.$file.' not found on server', 404)
+                    ->header('Content-Type', 'text/plain');
+            }
+
+            if ($download != 'true') {
+                if ($contents = file_get_contents($file)) {
+                    return Response::make($contents)->header('Content-Type', $mimetype);
+                }
+                return JsonResponse::create(["error" => "Failed validation: "], 500);
+            }
             return Response::download($file);
         }
+
+
         return redirect()->route('licenses.index')->with('error', trans('admin/licenses/message.does_not_exist', compact('id')));
     }
 

@@ -4,6 +4,7 @@ namespace App\Models;
 use App\Http\Traits\UniqueUndeletedTrait;
 use App\Models\Asset;
 use App\Models\SnipeModel;
+use App\Models\Traits\Searchable;
 use App\Models\User;
 use App\Presenters\Presentable;
 use Illuminate\Database\Eloquent\Model;
@@ -20,12 +21,12 @@ class Location extends SnipeModel
     protected $table = 'locations';
     protected $rules = array(
       'name'        => 'required|min:2|max:255|unique_undeleted',
-      'city'        => 'min:3|max:255|nullable',
+      'city'        => 'min:2|max:255|nullable',
       'country'     => 'min:2|max:2|nullable',
       'address'         => 'max:80|nullable',
       'address2'        => 'max:80|nullable',
       'zip'         => 'min:3|max:10|nullable',
-      // 'manager_id'  => 'exists:users'
+      'manager_id'  => 'exists:users,id|nullable'
     );
 
     /**
@@ -45,8 +46,39 @@ class Location extends SnipeModel
      *
      * @var array
      */
-    protected $fillable = ['name','parent_id','address','address2','city','state', 'country','zip','ldap_ou'];
+    protected $fillable = [
+        'name',
+        'parent_id',
+        'address',
+        'address2',
+        'city',
+        'state',
+        'country',
+        'zip',
+        'ldap_ou',
+        'currency',
+        'manager_id',
+        'image',
+    ];
     protected $hidden = ['user_id'];
+
+    use Searchable;
+    
+    /**
+     * The attributes that should be included when searching the model.
+     * 
+     * @var array
+     */
+    protected $searchableAttributes = ['name', 'address', 'city', 'state', 'zip', 'created_at'];
+
+    /**
+     * The relations and their attributes that should be included when searching the model.
+     * 
+     * @var array
+     */
+    protected $searchableRelations = [
+      'parent' => ['name']
+    ];
 
     public function users()
     {
@@ -158,39 +190,6 @@ class Location extends SnipeModel
 
         return $location_options;
     }
-
-    /**
-    * Query builder scope to search on text
-    *
-    * @param  Illuminate\Database\Query\Builder  $query  Query builder instance
-    * @param  text                              $search      Search term
-    *
-    * @return Illuminate\Database\Query\Builder          Modified query builder
-    */
-    public function scopeTextsearch($query, $search)
-    {
-
-        return $query->where('name', 'LIKE', "%$search%")
-          ->orWhere('address', 'LIKE', "%$search%")
-          ->orWhere('city', 'LIKE', "%$search%")
-          ->orWhere('state', 'LIKE', "%$search%")
-          ->orWhere('zip', 'LIKE', "%$search%")
-
-          // This doesn't actually work - need to use a table alias maybe?
-          ->orWhere(function ($query) use ($search) {
-              $query->whereHas('parent', function ($query) use ($search) {
-                  $query->where(function ($query) use ($search) {
-                      $query->where('name', 'LIKE', '%'.$search.'%');
-                  });
-              })
-            // Ugly, ugly code because Laravel sucks at self-joins
-                ->orWhere(function ($query) use ($search) {
-                    $query->whereRaw("parent_id IN (select id from ".DB::getTablePrefix()."locations where name LIKE '%".$search."%') ");
-                });
-          });
-
-    }
-
 
     /**
     * Query builder scope to order on parent

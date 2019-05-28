@@ -44,7 +44,7 @@ class AssetMaintenancesController extends Controller
             $maintenances->where('asset_id', '=', $request->input('asset_id'));
         }
 
-        $offset = request('offset', 0);
+        $offset = (($maintenances) && (request('offset') > $maintenances->count())) ? 0 : request('offset', 0);
         $limit = request('limit', 50);
 
         $allowed_columns = [
@@ -56,6 +56,8 @@ class AssetMaintenancesController extends Controller
                                 'start_date',
                                 'completion_date',
                                 'notes',
+                                'asset_tag',
+                                'asset_name',
                                 'user_id'
                             ];
         $order = Input::get('order') === 'asc' ? 'asc' : 'desc';
@@ -64,6 +66,12 @@ class AssetMaintenancesController extends Controller
         switch ($sort) {
             case 'user_id':
                 $maintenances = $maintenances->OrderAdmin($order);
+                break;
+            case 'asset_tag':
+                $maintenances = $maintenances->OrderByTag($order);
+                break;
+            case 'asset_name':
+                $maintenances = $maintenances->OrderByAssetName($order);
                 break;
             default:
                 $maintenances = $maintenances->orderBy($sort, $order);

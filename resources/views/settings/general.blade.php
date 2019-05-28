@@ -36,16 +36,15 @@
                         <i class="fa fa-wrench"></i> {{ trans('admin/settings/general.general_settings') }}
                     </h4>
                 </div>
-               <div class="box-body">
 
+               <div class="box-body">
 
                    <div class="col-md-12">
 
                     <!-- Full Multiple Companies Support -->
                     <div class="form-group {{ $errors->has('full_multiple_companies_support') ? 'error' : '' }}">
                         <div class="col-md-3">
-                            {{ Form::label('full_multiple_companies_support',
-                                           trans('admin/settings/general.full_multiple_companies_support_text')) }}
+                            {{ Form::label('full_multiple_companies_support', trans('admin/settings/general.full_multiple_companies_support_text')) }}
                         </div>
                         <div class="col-md-9">
                             {{ Form::checkbox('full_multiple_companies_support', '1', Input::old('full_multiple_companies_support', $setting->full_multiple_companies_support),array('class' => 'minimal')) }}
@@ -56,12 +55,13 @@
                             </p>
                         </div>
                     </div>
+
                     <!-- /.form-group -->
 
                     <!-- Require signature for acceptance -->
                     <div class="form-group {{ $errors->has('require_accept_signature') ? 'error' : '' }}">
                         <div class="col-md-3">
-                            {{ Form::label('full_multiple_companies_support',
+                            {{ Form::label('require_accept_signature',
                                            trans('admin/settings/general.require_accept_signature')) }}
                         </div>
                         <div class="col-md-9">
@@ -118,11 +118,42 @@
                         </div>
                         <div class="col-md-9">
                             {{ Form::checkbox('load_remote', '1', Input::old('load_remote', $setting->load_remote),array('class' => 'minimal')) }}
-                            {{ trans('admin/settings/general.load_remote_help_text') }}
+                            <p class="help-block">{{ trans('admin/settings/general.load_remote_help_text') }}</p>
                         </div>
                     </div>
 
-                    <!-- Per Page -->
+                       <!-- Load images in emails -->
+                       <div class="form-group {{ $errors->has('show_images_in_email') ? 'error' : '' }}">
+                           <div class="col-md-3">
+                               {{ Form::label('show_images_in_email', trans('admin/settings/general.show_images_in_email')) }}
+                           </div>
+                           <div class="col-md-9">
+                               {{ Form::checkbox('show_images_in_email', '1', Input::old('show_images_in_email', $setting->show_images_in_email),array('class' => 'minimal')) }}
+                               {{ trans('general.yes') }}
+                               {!! $errors->first('show_images_in_email', '<span class="alert-msg">:message</span>') !!}
+                               <p class="help-block">
+                                   {{ trans('admin/settings/general.show_images_in_email_help') }}
+                               </p>
+                           </div>
+                       </div>
+
+                       <!-- unique serial -->
+                       <div class="form-group">
+                           <div class="col-md-3">
+                               {{ Form::label('unique_serial', trans('admin/settings/general.unique_serial')) }}
+                           </div>
+                           <div class="col-md-9">
+                               {{ Form::checkbox('unique_serial', '1', Input::old('unique_serial', $setting->unique_serial),array('class' => 'minimal')) }}
+                               {{ trans('general.yes') }}
+                               {!! $errors->first('unique_serial', '<span class="alert-msg">:message</span>') !!}
+                               <p class="help-block">
+                               {{ trans('admin/settings/general.unique_serial_help_text') }}
+                               </p>
+                           </div>
+                       </div>
+
+
+                       <!-- Per Page -->
                     <div class="form-group {{ $errors->has('per_page') ? 'error' : '' }}">
                         <div class="col-md-3">
                             {{ Form::label('per_page', trans('admin/settings/general.per_page')) }}
@@ -148,7 +179,7 @@
                     <!-- Default EULA -->
                    <div class="form-group {{ $errors->has('default_eula_text') ? 'error' : '' }}">
                        <div class="col-md-3">
-                           {{ Form::label('per_page', trans('admin/settings/general.default_eula_text')) }}
+                           {{ Form::label('default_eula_text', trans('admin/settings/general.default_eula_text')) }}
                        </div>
                        <div class="col-md-9">
                            {{ Form::textarea('default_eula_text', Input::old('default_eula_text', $setting->default_eula_text), array('class' => 'form-control','placeholder' => 'Add your default EULA text')) }}
@@ -252,6 +283,26 @@
                        </div>
                        <!-- /.form-group -->
 
+                       <!-- Privacy Policy Footer-->
+                       <div class="form-group {{ $errors->has('privacy_policy_link') ? 'error' : '' }}">
+                           <div class="col-md-3">
+                               {{ Form::label('privacy_policy_link', trans('admin/settings/general.privacy_policy_link')) }}
+                           </div>
+                           <div class="col-md-9">
+                               @if (config('app.lock_passwords'))
+                                   {{ Form::text('privacy_policy_link', Input::old('privacy_policy_link', $setting->privacy_policy_link), array('class' => 'form-control disabled', 'disabled' => 'disabled')) }}
+                               @else
+                                   {{ Form::text('privacy_policy_link', Input::old('privacy_policy_link', $setting->privacy_policy_link), array('class' => 'form-control')) }}
+
+                               @endif
+
+
+                               <span class="help-block">{{ trans('admin/settings/general.privacy_policy_link_help')  }}</span>
+                               {!! $errors->first('privacy_policy_link', '<span class="alert-msg">:message</span>') !!}
+                           </div>
+                       </div>
+                   </div>
+
             </div> <!--/.box-body-->
             <div class="box-footer">
                 <div class="text-left col-md-6">
@@ -263,6 +314,7 @@
 
             </div>
             </div>
+
         </div> <!-- /box -->
     </div> <!-- /.col-md-8-->
     </div> <!-- /.row-->

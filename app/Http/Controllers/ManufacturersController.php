@@ -36,7 +36,7 @@ class ManufacturersController extends Controller
     public function index()
     {
         $this->authorize('index', Manufacturer::class);
-        return view('manufacturers/index', compact('manufacturers'));
+        return view('manufacturers/index');
     }
 
 
@@ -170,7 +170,7 @@ class ManufacturersController extends Controller
             try  {
                 unlink(app('manufacturers_upload_path').$old_image);
             } catch (\Exception $e) {
-                \Log::error($e);
+                \Log::info($e);
             }
         }
 
@@ -207,7 +207,7 @@ class ManufacturersController extends Controller
             try  {
                 unlink(public_path().'/uploads/manufacturers/'.$manufacturer->image);
             } catch (\Exception $e) {
-                \Log::error($e);
+                \Log::info($e);
             }
         }
 
@@ -240,6 +240,32 @@ class ManufacturersController extends Controller
         $error = trans('admin/manufacturers/message.does_not_exist');
         // Redirect to the user management page
         return redirect()->route('manufacturers.index')->with('error', $error);
+    }
+
+    /**
+     * Restore a given Manufacturer (mark as un-deleted)
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v4.1.15]
+     * @param int $manufacturers_id
+     * @return Redirect
+     */
+    public function restore($manufacturers_id)
+    {
+        $this->authorize('create', Manufacturer::class);
+        $manufacturer = Manufacturer::onlyTrashed()->where('id',$manufacturers_id)->first();
+
+        if ($manufacturer) {
+
+            // Not sure why this is necessary - it shouldn't fail validation here, but it fails without this, so....
+            $manufacturer->setValidating(false);
+            if ($manufacturer->restore()) {
+                return redirect()->route('manufacturers.index')->with('success', trans('admin/manufacturers/message.restore.success'));
+            }
+            return redirect()->back()->with('error', 'Could not restore.');
+        }
+        return redirect()->back()->with('error', trans('admin/manufacturers/message.does_not_exist'));
+
     }
 
    

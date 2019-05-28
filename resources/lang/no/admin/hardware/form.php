@@ -38,6 +38,7 @@ return array(
     'tag'				=> 'Eiendelsmerke',
     'update'			=> 'Oppdater eiendel',
     'warranty'			=> 'Garanti',
+		'warranty_expires'		=> 'Garantien utløper',
     'years'				=> 'år',
 )
 ;

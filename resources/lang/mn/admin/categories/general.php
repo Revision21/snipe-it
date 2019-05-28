@@ -6,6 +6,7 @@ return array(
     'asset_categories' 					=> 'Хөрөнгийн ангиллууд',
     'category_name'  					=> 'Ангиллын нэр',
     'checkin_email'                     => 'Олгох үед хэрэглэгч уруу имэйл илгээх.',
+    'checkin_email_notification'        => 'This user will be sent an email on checkin/checkout.',
     'clone'                             => 'Ангиллыг хуулж үүсгэх',
     'create'  							=> 'Ангилал үүсгэх',
     'edit'                              => 'Ангилал засах',

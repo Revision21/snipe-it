@@ -45,15 +45,24 @@ class ProfileController extends Controller
     {
 
         $user = Auth::user();
-        $user->first_name = Input::get('first_name');
-        $user->last_name  = Input::get('last_name');
-        $user->website    = Input::get('website');
-        $user->location_id    = Input::get('location_id');
-        $user->gravatar   = Input::get('gravatar');
-        $user->locale = Input::get('locale');
+        $user->first_name = $request->input('first_name');
+        $user->last_name  = $request->input('last_name');
+        $user->website    = $request->input('website');
+        $user->gravatar   = $request->input('gravatar');
+        $user->phone   = $request->input('phone');
+
+
+
+        if (!config('app.lock_passwords')) {
+            $user->locale = $request->input('locale', 'en');
+        }
 
         if ((Gate::allows('self.two_factor')) && ((Setting::getSettings()->two_factor_enabled=='1') && (!config('app.lock_passwords')))) {
-            $user->two_factor_optin = Input::get('two_factor_optin', '0');
+            $user->two_factor_optin = $request->input('two_factor_optin', '0');
+        }
+
+        if (Gate::allows('self.edit_location')  && (!config('app.lock_passwords'))) {
+            $user->location_id    = $request->input('location_id');
         }
         
         if (Input::file('avatar')) {
@@ -119,8 +128,7 @@ class ProfileController extends Controller
 
         $rules = array(
             'current_password'     => 'required',
-            'password'         => Setting::passwordComplexityRulesSaving('store'),
-            'password_confirm' => 'required|same:password',
+            'password'         => Setting::passwordComplexityRulesSaving('store').'|confirmed',
         );
 
         $validator = \Validator::make($request->all(), $rules);

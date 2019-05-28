@@ -15,6 +15,11 @@ return array(
         'success' => 'Üretici güncellendi.'
     ),
 
+    'restore' => array(
+        'error'   => 'Üretici geri yüklenmedi, lütfen tekrar deneyin',
+        'success' => 'Üretici başarıyla geri yüklendi.'
+    ),
+
     'delete' => array(
         'confirm'   => 'Üreticiyi silmek istediğinize emin misiniz?',
         'error'   => 'Üretici silinirken bir hata oluştu. Lütfen tekrar deneyin.',

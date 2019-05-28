@@ -22,10 +22,34 @@
             padding: 3px;
             font-size: 12px;
         }
+
+        .print-logo {
+            max-height: 40px;
+        }
+
     </style>
 </head>
 <body>
-<h3>Assigned to {{ $show_user->present()->fullName() }}</h3>
+
+@if ($snipeSettings->logo_print_assets=='1')
+    @if ($snipeSettings->brand == '3')
+
+        <h3>
+        @if ($snipeSettings->logo!='')
+            <img class="print-logo" src="{{ url('/') }}/uploads/{{ $snipeSettings->logo }}">
+        @endif
+        {{ $snipeSettings->site_name }}
+        </h3>
+    @elseif ($snipeSettings->brand == '2')
+        @if ($snipeSettings->logo!='')
+            <img class="print-logo" src="{{ url('/') }}/uploads/{{ $snipeSettings->logo }}">
+        @endif
+    @else
+      <h3>{{ $snipeSettings->site_name }}</h3>
+    @endif
+@endif
+
+<h4>Assigned to {{ $show_user->present()->fullName() }}</h4>
 
 @if ($assets->count() > 0)
     @php
@@ -93,7 +117,13 @@
             <tr>
                 <td>{{ $lcounter }}</td>
                 <td>{{ $license->name }}</td>
-                <td>{{ $license->serial }}</td>
+                <td>
+                    @can('viewKeys', $license)
+                        {{ $license->serial }}
+                    @else
+                        ------------
+                    @endcan
+                </td>
                 <td>{{  $license->assetlog->first()->created_at }}</td>
             </tr>
             @php

@@ -37,7 +37,13 @@
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{{ trans('admin/hardware/form.serial') }}</label>
                         <div class="col-md-9">
-                            <p class="form-control-static" style="word-wrap: break-word;">{{ $license->serial }}</p>
+                            <p class="form-control-static" style="word-wrap: break-word;">
+                                @can('viewKeys', $license)
+                                    {{ $license->serial }}
+                                @else
+                                    ------------
+                                @endcan
+                            </p>
                         </div>
                     </div>
 
@@ -57,6 +63,40 @@
                         </div>
                     </div>
                 </div>
+
+
+                @if ($license->requireAcceptance() || $license->getEula() || ($snipeSettings->slack_endpoint!=''))
+                    <div class="form-group notification-callout">
+                        <div class="col-md-8 col-md-offset-3">
+                            <div class="callout callout-info">
+
+                                @if ($license->requireAcceptance())
+                                    <i class="fa fa-envelope"></i>
+                                    {{ trans('admin/categories/general.required_acceptance') }}
+                                    <br>
+                                @endif
+
+                                @if ($license->getEula())
+                                    <i class="fa fa-envelope"></i>
+                                    {{ trans('admin/categories/general.required_eula') }}
+                                    <br>
+                                @endif
+
+                                @if (($license->category) && ($license->category->checkin_email))
+                                    <i class="fa fa-envelope"></i>
+                                    {{ trans('admin/categories/general.checkin_email_notification') }}
+                                    <br>
+                                @endif
+
+                                @if ($snipeSettings->slack_endpoint!='')
+                                    <i class="fa fa-slack"></i>
+                                    A slack message will be sent
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="box-footer">
                     <a class="btn btn-link" href="{{ route('licenses.index') }}">{{ trans('button.cancel') }}</a>
                     <button type="submit" class="btn btn-success pull-right"><i class="fa fa-check icon-white"></i> {{ trans('general.checkout') }}</button>

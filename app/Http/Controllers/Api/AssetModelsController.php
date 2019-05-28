@@ -32,7 +32,21 @@ class AssetModelsController extends Controller
         $this->authorize('view', AssetModel::class);
         $allowed_columns = ['id','image','name','model_number','eol','notes','created_at','manufacturer','assets_count'];
 
-        $assetmodels = AssetModel::select(['models.id','models.image','models.name','model_number','eol','models.notes','models.created_at','category_id','manufacturer_id','depreciation_id','fieldset_id', 'models.deleted_at'])
+        $assetmodels = AssetModel::select([
+            'models.id',
+            'models.image',
+            'models.name',
+            'model_number',
+            'eol',
+            'models.notes',
+            'models.created_at',
+            'category_id',
+            'manufacturer_id',
+            'depreciation_id',
+            'fieldset_id',
+            'models.deleted_at',
+            'models.updated_at',
+         ])
             ->with('category','depreciation', 'manufacturer','fieldset')
             ->withCount('assets');
 
@@ -46,7 +60,7 @@ class AssetModelsController extends Controller
             $assetmodels->TextSearch($request->input('search'));
         }
 
-        $offset = $request->input('offset', 0);
+        $offset = (($assetmodels) && (request('offset') > $assetmodels->count())) ? 0 : request('offset', 0);
         $limit = $request->input('limit', 50);
         $order = $request->input('order') === 'asc' ? 'asc' : 'desc';
         $sort = in_array($request->input('sort'), $allowed_columns) ? $request->input('sort') : 'models.created_at';
@@ -131,13 +145,13 @@ class AssetModelsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->authorize('edit', AssetModel::class);
+        $this->authorize('update', AssetModel::class);
         $assetmodel = AssetModel::findOrFail($id);
         $assetmodel->fill($request->all());
         $assetmodel->fieldset_id = $request->get("custom_fieldset_id");
 
         if ($assetmodel->save()) {
-            return response()->json(Helper::formatStandardApiResponse('success', $assetmodel, trans('admin/assetmodels/message.update.success')));
+            return response()->json(Helper::formatStandardApiResponse('success', $assetmodel, trans('admin/models/message.update.success')));
         }
 
         return response()->json(Helper::formatStandardApiResponse('error', null, $assetmodel->getErrors()));
@@ -165,12 +179,12 @@ class AssetModelsController extends Controller
             try  {
                 unlink(public_path().'/uploads/models/'.$assetmodel->image);
             } catch (\Exception $e) {
-                \Log::error($e);
+                \Log::info($e);
             }
         }
 
         $assetmodel->delete();
-        return response()->json(Helper::formatStandardApiResponse('success', null,  trans('admin/assetmodels/message.delete.success')));
+        return response()->json(Helper::formatStandardApiResponse('success', null,  trans('admin/models/message.delete.success')));
 
     }
 
